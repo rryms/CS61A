@@ -344,6 +344,14 @@ def make_averaged(original_function, trials_count=1000):
     """
     # BEGIN PROBLEM 8
     "*** YOUR CODE HERE ***"
+    def make_average(*args):
+        times=trials_count
+        sum=0
+        while times:
+            sum=sum+original_function(*args)
+            times-=1    
+        return sum/trials_count
+    return make_average
     # END PROBLEM 8
 
 
@@ -358,6 +366,14 @@ def max_scoring_num_rolls(dice=six_sided, trials_count=1000):
     """
     # BEGIN PROBLEM 9
     "*** YOUR CODE HERE ***"
+    max_dice_turn=0
+    for num in range(1,11):
+        dice_try=make_averaged(roll_dice,trials_count)
+        dice_count=dice_try(num,dice)
+        if max_dice_turn<dice_count:
+            this_turn=num
+            max_dice_turn=dice_count
+    return this_turn
     # END PROBLEM 9
 
 
