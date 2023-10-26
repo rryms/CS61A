@@ -8,7 +8,7 @@ hw01_fin
 
 **lab**
 
-lab01_fin
+lab01_fin ; lab02_fin_except_optional
 
 **project**
 
