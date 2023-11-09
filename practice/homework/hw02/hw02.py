@@ -63,7 +63,19 @@ def pingpong(n):
     >>> check(HW_SOURCE_FILE, 'pingpong', ['Assign', 'AugAssign'])
     True
     """
+    # 将简单的怎么扩充的复杂的函数,basic case 不仅有1，还有 n
     "*** YOUR CODE HERE ***"
+    def pingponghelper(index,score,n,step):
+        if index==n:
+            return score
+        elif index%8==0 or num_eights(index)!=0:
+            return pingponghelper(index+1,score+index,n,-step)
+        else:
+            return pingponghelper(index+1,score+step,n,step)
+        
+    return pingponghelper(0,0,n,1)
+    
+
 
 
 def missing_digits(n):
@@ -94,6 +106,15 @@ def missing_digits(n):
     True
     """
     "*** YOUR CODE HERE ***"
+    def if_missing(n,record):
+        if(n<10):
+            return record
+        elif(n%10==n//10%10):
+            return if_missing(n//10,record)
+        else:
+            record=n%10-n//10%10-1+record
+            return if_missing(n//10,record)
+    return if_missing(n,0)
 
 
 def next_largest_coin(coin):
@@ -130,6 +151,12 @@ def count_coins(total):
     True
     """
     "*** YOUR CODE HERE ***"
+    def helpercounter(total,times,minus=0):
+        if total == 1:
+            return times
+        else:
+            if minus
+
 
 
 from operator import sub, mul
