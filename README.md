@@ -4,7 +4,7 @@
 
 **hw**
 
-hw01_fin
+hw01_fin ; hw02__except(Just for Fun);
 
 **lab**
 

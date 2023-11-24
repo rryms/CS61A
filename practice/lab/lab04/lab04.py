@@ -19,6 +19,12 @@ def skip_add(n):
     True
     """
     "*** YOUR CODE HERE ***"
+    if n == 0 :
+        return 0
+    elif n == 1 :
+        return 1
+    else:
+        return n + skip_add(n-2)
 
 
 def summation(n, term):
@@ -41,6 +47,10 @@ def summation(n, term):
     """
     assert n >= 1
     "*** YOUR CODE HERE ***"
+    if n == 1:
+        return term(1)
+    else:
+        return term(n)+summation(n-1 , term)
 
 
 def paths(m, n):
