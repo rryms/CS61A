@@ -40,9 +40,9 @@ def pick(paragraphs, select, k):
     num = 0
     for case in paragraphs:
         if(select(case)):
-            num+=1
-        if(num == k):
-            return case
+            if(k == num):
+                return case
+            num += 1
     return ''
              
 
@@ -68,6 +68,17 @@ def about(subject):
 
     # BEGIN PROBLEM 2
     "*** YOUR CODE HERE ***"
+    def Selected(Paragraph):
+        for item in split(Paragraph):
+            item = lower(remove_punctuation(item))
+            for case in subject:
+                if (item == case):
+                    return True
+        return False
+    
+    return Selected
+
+
     # END PROBLEM 2
 
 
@@ -98,6 +109,25 @@ def accuracy(typed, source):
     source_words = split(source)
     # BEGIN PROBLEM 3
     "*** YOUR CODE HERE ***"
+    num = 0
+    count = 0
+    longest_cor = 0
+    for typed_word in typed_words:
+        if num <= len(source_words) - 1:
+            if typed_word == source_words[num] :
+                count += 1
+        num+=1
+    if(num==0 and len(source_words)==0):
+        return 100.0
+    elif num == 0 :
+        return 0.0
+    else:
+        return count/num * 100
+# Fuck misread: the conrespondding
+        
+            
+
+
     # END PROBLEM 3
 
 
