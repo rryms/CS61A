@@ -5,24 +5,30 @@ from random import randrange
 
 import cats
 from gui_files.common_server import route, forward_to_server, server_only
-from gui_files.db import connect_db, setup_db
-from gui_files.leaderboard_integrity import get_authorized_limit, get_captcha_urls, encode_challenge, decode_challenge, \
-    create_wpm_authorization
+from .leaderboard_integrity import (
+    get_authorized_limit,
+    get_captcha_urls,
+    encode_challenge,
+    decode_challenge,
+    create_wpm_authorization,
+)
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 4
 QUEUE_TIMEOUT = timedelta(seconds=1)
 MAX_WAIT = timedelta(seconds=5)
 
-MAX_NAME_LENGTH = 30
+MAX_NAME_LENGTH = 90
 
 MAX_UNVERIFIED_WPM = 90
-CAPTCHA_ACCURACY_THRESHOLD = 60
-CAPTCHA_SLOWDOWN_FACTOR = 0.6
+CAPTCHA_ACCURACY_THRESHOLD = 80
+CAPTCHA_SLOWDOWN_FACTOR = 0.8
 
 
 def db_init():
-    setup_db("cats")
+    global connect_db
+    from common.db import connect_db
+
     with connect_db() as db:
         db(
             """CREATE TABLE IF NOT EXISTS leaderboard (
@@ -49,10 +55,10 @@ def create_multiplayer_server():
         if id in State.game_lookup:
             game_id = State.game_lookup[id]
             return {
-                    "start": True,
-                    "text": State.game_data[game_id]["text"],
-                    "players": State.game_data[game_id]["players"],
-                }
+                "start": True,
+                "text": State.game_data[game_id]["text"],
+                "players": State.game_data[game_id]["players"],
+            }
 
         if id not in State.queue:
             State.queue[id] = [None, datetime.now()]
@@ -68,13 +74,20 @@ def create_multiplayer_server():
         for player in to_remove:
             del State.queue[player]
 
-        if len(State.queue) >= MAX_PLAYERS or \
-                max(datetime.now() - join_time for recent_time, join_time in State.queue.values()) >= MAX_WAIT and \
-                len(State.queue) >= MIN_PLAYERS:
+        if (
+            len(State.queue) >= MAX_PLAYERS
+            or max(
+                datetime.now() - join_time
+                for recent_time, join_time in State.queue.values()
+            )
+            >= MAX_WAIT
+            and len(State.queue) >= MIN_PLAYERS
+        ):
             # start game!
-            import gui
-            curr_text = gui.request_paragraph()
-            game_id = gui.request_id()
+            import cats_gui
+
+            curr_text = cats_gui.request_paragraph()
+            game_id = cats_gui.request_id()
 
             for player in State.queue:
                 State.game_lookup[player] = game_id
@@ -117,20 +130,50 @@ def create_multiplayer_server():
     def record_wpm(name, user, wpm, token):
         authorized_limit = get_authorized_limit(user=user, token=token)
 
-        if wpm > max(MAX_UNVERIFIED_WPM, authorized_limit) or len(name) > MAX_NAME_LENGTH:
+        if (
+            wpm > max(MAX_UNVERIFIED_WPM, authorized_limit)
+            or len(name) > MAX_NAME_LENGTH
+        ):
             return
 
         with connect_db() as db:
             db("DELETE FROM leaderboard WHERE user_id = (%s)", [user])
-            db("INSERT INTO leaderboard (name, user_id, wpm) VALUES (%s, %s, %s)", [name, user, wpm])
+            db(
+                "INSERT INTO leaderboard (name, user_id, wpm) VALUES (%s, %s, %s)",
+                [name, user, wpm],
+            )
+
+    @route
+    @forward_to_server
+    def check_on_leaderboard(user):
+        with connect_db() as db:
+            users = list(
+                x[0]
+                for x in db(
+                    "SELECT user_id FROM leaderboard ORDER BY wpm DESC LIMIT 20"
+                ).fetchall()
+            )
+        return bool(user in users)
+
+    @route
+    @forward_to_server
+    def update_name(new_name, user):
+        if len(new_name) > MAX_NAME_LENGTH:
+            return
+        with connect_db() as db:
+            db("UPDATE leaderboard SET name=(%s) WHERE user_id=(%s)", [new_name, user])
 
     @route
     @forward_to_server
     def check_leaderboard_eligibility(wpm, user, token):
         with connect_db() as db:
-            vals = db("SELECT wpm FROM leaderboard ORDER BY wpm DESC LIMIT 20").fetchall()
+            vals = db(
+                "SELECT wpm FROM leaderboard ORDER BY wpm DESC LIMIT 20"
+            ).fetchall()
             threshold = vals[-1][0] if len(vals) >= 20 else 0
-            prev_best = db("SELECT wpm FROM leaderboard WHERE user_id=(%s)", [user]).fetchone()
+            prev_best = db(
+                "SELECT wpm FROM leaderboard WHERE user_id=(%s)", [user]
+            ).fetchone()
             if prev_best:
                 threshold = max(threshold, prev_best[0])
 
@@ -138,7 +181,7 @@ def create_multiplayer_server():
 
         return {
             "eligible": wpm >= threshold,
-            "needVerify": wpm > max(authorized_limit, MAX_UNVERIFIED_WPM)
+            "needVerify": wpm > max(authorized_limit, MAX_UNVERIFIED_WPM),
         }
 
     @route
@@ -149,7 +192,7 @@ def create_multiplayer_server():
         return {
             "images": captcha_image_urls,
             "token": token,
-            "lastWordLen": len(words[-1])
+            "lastWordLen": len(words[-1]),
         }
 
     @route
@@ -161,30 +204,29 @@ def create_multiplayer_server():
         if user != challenge_user:
             return
 
+        # frontend may include empty/null words
+        typed = [word for word in typed if word]
+
         accuracy = cats.accuracy(" ".join(typed), " ".join(reference))
         wpm = cats.wpm(" ".join(reference), end_time - start_time)
 
         if wpm < claimed_wpm * CAPTCHA_SLOWDOWN_FACTOR:
             # too slow!
-            return {
-                "success": False,
-                "message": "Your captcha was typed too slowly!"
-            }
+            return {"success": False, "message": "Your captcha was typed too slowly!"}
 
         if accuracy < CAPTCHA_ACCURACY_THRESHOLD:
             # too inaccurate!
-            return {
-                "success": False,
-                "message": "You made too many mistakes!"
-            }
+            return {"success": False, "message": "You made too many mistakes!"}
 
-        return {
-            "success": True,
-            "token": create_wpm_authorization(user, claimed_wpm)
-        }
+        return {"success": True, "token": create_wpm_authorization(user, claimed_wpm)}
 
     @route
     @forward_to_server
     def leaderboard():
         with connect_db() as db:
-            return list(list(x) for x in db("SELECT name, wpm FROM leaderboard ORDER BY wpm DESC LIMIT 20").fetchall())
+            return list(
+                list(x)
+                for x in db(
+                    "SELECT name, wpm FROM leaderboard ORDER BY wpm DESC LIMIT 20"
+                ).fetchall()
+            )

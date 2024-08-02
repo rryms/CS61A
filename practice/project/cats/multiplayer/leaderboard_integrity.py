@@ -11,10 +11,10 @@ import cats
 
 fernet = None
 
-COMMON_WORDS_SET = set(cats.lines_from_file('data/common_words.txt'))
+COMMON_WORDS_SET = set(cats.lines_from_file("data/common_words.txt"))
 CAPTCHA_QUEUE_LEN = 200
 CAPTCHA_LENGTH = 10
-CAPTCHA_WORD_LEN = 6
+CAPTCHA_WORD_LEN = 10
 
 captcha_queue = Queue()
 
@@ -25,6 +25,7 @@ def require_fernet(f):
         global fernet
         if not fernet:
             from cryptography.fernet import Fernet
+
             fernet = Fernet(os.environ.get("FERNET_KEY", Fernet.generate_key()))
         return f(*args, **kwargs)
 
@@ -38,6 +39,7 @@ def token_writer(f):
         data = f(*args, **kwargs)
         decoded = json.dumps(data).encode("utf-8")
         return fernet.encrypt(decoded).decode("utf-8")
+
     return wrapped
 
 
@@ -47,13 +49,18 @@ def token_reader(fail):
         @require_fernet
         def wrapped(*, token, **kwargs):
             from cryptography.fernet import InvalidToken
+
             if not token:
                 return fail
             try:
-                return f(token=json.loads(fernet.decrypt(token.encode("utf-8"))), **kwargs)
+                return f(
+                    token=json.loads(fernet.decrypt(token.encode("utf-8"))), **kwargs
+                )
             except (TypeError, InvalidToken):
                 return fail
+
         return wrapped
+
     return decorator
 
 
@@ -93,8 +100,9 @@ def populate_captcha_queue():
 
 def generate_captcha():
     from claptcha import Claptcha
-    word = random.choice([x for x in COMMON_WORDS_SET if len(x) < CAPTCHA_LENGTH])
-    c = Claptcha(word, "gui_files/FreeMono.ttf", margin=(20, 10))
+
+    word = random.choice([x for x in COMMON_WORDS_SET if len(x) < CAPTCHA_WORD_LEN])
+    c = Claptcha(word, "multiplayer/FreeMono.ttf", margin=(20, 10))
     image_b64 = base64.b64encode(c.bytes[1].getvalue()).decode("utf-8")
     return "data:image/png;base64," + image_b64, word
 
