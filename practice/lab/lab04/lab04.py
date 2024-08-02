@@ -21,10 +21,17 @@ def skip_add(n):
     "*** YOUR CODE HERE ***"
     if n == 0 :
         return 0
+<<<<<<< HEAD
     elif n == 1:
         return 1
     else:
         return skip_add(n-2) + n
+=======
+    elif n == 1 :
+        return 1
+    else:
+        return n + skip_add(n-2)
+>>>>>>> 60c303961e50c4ca493a525b1045727b7f4b389a
 
 
 def summation(n, term):
@@ -47,10 +54,17 @@ def summation(n, term):
     """
     assert n >= 1
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     if n == 1 :
         return term(1)
     else :
         return term(n) + summation(n-1,term)
+=======
+    if n == 1:
+        return term(1)
+    else:
+        return term(n)+summation(n-1 , term)
+>>>>>>> 60c303961e50c4ca493a525b1045727b7f4b389a
 
 
 def paths(m, n):
@@ -67,10 +81,20 @@ def paths(m, n):
     1
     """
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     if m == 1 or n == 1 :
         return 1 
     else :
         return paths(m-1,n) + paths(m,n-1)
+=======
+    if m==1 and n==1:
+        return 1
+    elif m==1:
+        return paths(m,n-1)
+    elif n==1:
+        return paths(m-1,n)
+    return paths(m-1,n)+paths(m,n-1)
+>>>>>>> 60c303961e50c4ca493a525b1045727b7f4b389a
 
 
 
@@ -119,13 +143,13 @@ def max_subseq(n, t):
     5
     """
     "*** YOUR CODE HERE ***"
-    if t == 0 :
-        return 0
-    elif n == 0 :
-        return 0 
-    else:
-        return max(max_subseq(n//10,t),10*max_subseq(n//10,t-1)+n%10)
-
+    def max_seq(a,b,c):
+        if b==0:
+            return 0
+        if a==0:
+            return 0
+        return max(max_seq(a//10,b-1,c)+a%10*(10**(c-b)),max_seq(a//10,b,c))
+    return max_seq(n,t,t)
 
 def add_chars(w1, w2):
     """
@@ -154,10 +178,17 @@ def add_chars(w1, w2):
     True
     """
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     if len(w1) == 0 :
         return w2
     if w1[0] == w2[0]:
         return add_chars(w1[1:],w2[1:])
     else:
         return w2[0] + add_chars(w1,w2[1:])
+=======
+    if w1==None:
+        return
+    return add_chars(w1[1:],w2[1:])
+
+>>>>>>> 60c303961e50c4ca493a525b1045727b7f4b389a
 

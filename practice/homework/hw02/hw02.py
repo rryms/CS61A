@@ -151,14 +151,20 @@ def count_coins(total):
     True
     """
     "*** YOUR CODE HERE ***"
-    def helpercounter(total,coin=1):
-        if total ==0:
+    def help_count(num,coin=1):
+        next_coin=next_largest_coin(coin)
+        if coin == 25 :
+            next_coin=25
+        if num == 0:
             return 1
-        elif total > coin :
-            if coin !=25:
-                coins = next_largest_coin(coin)
-            return helpercounter(total-coins,coins)+helpercounter(total-coin,coin)
-        
+        elif num < 0:
+            return 0
+        elif coin == 25:
+            return help_count(num-coin,coin)
+        else:
+            return help_count(num-coin,coin)+help_count(num,next_coin)
+    return help_count(total,1)
+
 
 from operator import sub, mul
 

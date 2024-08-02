@@ -4,11 +4,13 @@
 
 **hw**
 
-hw01_fin hw02_last-kale
+hw01_fin ; hw02__except(Just for Fun);
 
 **lab**
 
-lab01_fin ; lab02_fin_except_optional : lab04_fin
+lab01_fin ; lab02_fin_except_optional;
+
+lab04_fin___except optional
 
 **project**
 
