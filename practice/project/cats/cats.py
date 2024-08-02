@@ -37,6 +37,17 @@ def pick(paragraphs, select, k):
     """
     # BEGIN PROBLEM 1
     "*** YOUR CODE HERE ***"
+    num = 0
+    for case in paragraphs:
+        if(select(case)):
+            num+=1
+        if(num == k):
+            return case
+    return ''
+             
+
+
+
     # END PROBLEM 1
 
 
